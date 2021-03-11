@@ -2,15 +2,20 @@ using UnityEngine;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
-public static class SaveManager
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+public class SaveManager : MonoBehaviour
 {
+    private static string SavesFolderPath { get { return Path.Combine(Application.persistentDataPath, "Saves"); } }
+
     public static void SaveData<T>(string fileName, T dataToSave)
     {
-        string savesFolderPath = Path.Combine(Application.persistentDataPath, "Saves");
-        if (!Directory.Exists(savesFolderPath))
-            Directory.CreateDirectory(savesFolderPath);
+        if (!Directory.Exists(SavesFolderPath))
+            Directory.CreateDirectory(SavesFolderPath);
 
-        string filePath = Path.Combine(savesFolderPath, fileName);
+        string filePath = Path.Combine(SavesFolderPath, fileName);
         FileStream fileStream = null;
         try
         {
@@ -29,11 +34,10 @@ public static class SaveManager
     public static bool LoadData<T>(string fileName, out T dataToLoad)
     {
         dataToLoad = default;
-        string savesFolderPath = Path.Combine(Application.persistentDataPath, "Saves");
-        if (!Directory.Exists(savesFolderPath))
+        if (!Directory.Exists(SavesFolderPath))
             return false;
 
-        string filePath = Path.Combine(savesFolderPath, fileName);
+        string filePath = Path.Combine(SavesFolderPath, fileName);
         if (!File.Exists(filePath))
             return false;
 
@@ -54,5 +58,21 @@ public static class SaveManager
         }
 
         return wasDataLoadSuccessful;
+    }
+    
+    #if UNITY_EDITOR
+    [MenuItem("SaveManager/Delete All Saved Data")]
+    #endif
+    public static void DeleteAllData()
+    {
+        if (Directory.Exists(SavesFolderPath))
+            Directory.Delete(SavesFolderPath, true);
+    }
+
+    public static void DeleteOneFile(string fileName)
+    {
+        string filePath = Path.Combine(SavesFolderPath, fileName);
+        if (File.Exists(filePath))
+            File.Delete(filePath);
     }
 }
